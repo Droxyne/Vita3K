@@ -606,21 +606,6 @@ int get_default_supported_memory_mapping_mask(EmuEnvState *emuenv) {
     return static_cast<int>(1 << 0);
 }
 
-bool default_gpu_is_mali(EmuEnvState *emuenv) {
-    std::string gpu_name;
-    if (emuenv && emuenv->renderer && emuenv->backend_renderer == renderer::Backend::Vulkan) {
-        gpu_name = std::string(emuenv->renderer->get_gpu_name());
-    } else if (const auto *device_info = get_cached_default_vulkan_device_info(emuenv)) {
-        if (device_info->gpu_names.size() > 1)
-            gpu_name = device_info->gpu_names[1];
-    }
-
-    std::transform(gpu_name.begin(), gpu_name.end(), gpu_name.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    return gpu_name.find("mali") != std::string::npos;
-}
-
 } // namespace
 
 extern "C" {
@@ -841,7 +826,7 @@ Java_org_vita3k_emulator_NativeLib_getCustomDriverSupportInfo(JNIEnv *env, jclas
 
 JNIEXPORT jboolean JNICALL
 Java_org_vita3k_emulator_NativeLib_shouldShowCustomDriverOptions(JNIEnv *, jclass) {
-    return default_gpu_is_mali(get_emuenv()) ? JNI_FALSE : JNI_TRUE;
+    return JNI_TRUE;
 }
 
 JNIEXPORT jobjectArray JNICALL
