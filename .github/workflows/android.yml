@@ -11,6 +11,8 @@ permissions:
 
 env:
   BUILD_TYPE: Reldebug
+  VCPKG_ROOT: /usr/local/share/vcpkg
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-binary-cache
 
 jobs:
   android:
@@ -26,6 +28,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          add-job-summary: on-failure
+          cache-provider: basic
+          validate-wrappers: false
 
       - name: Set up Android SDK
         run: |
@@ -52,14 +61,12 @@ jobs:
       - name: Install system build tools
         run: sudo apt-get update && sudo apt-get install -y ninja-build ccache
 
-      - name: Set up vcpkg
+      - name: Set up Android build environment
         run: |
-          git clone --depth 1 https://github.com/microsoft/vcpkg.git "${GITHUB_WORKSPACE}/vcpkg"
-          "${GITHUB_WORKSPACE}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
-          echo "VCPKG_ROOT=${GITHUB_WORKSPACE}/vcpkg" >> "$GITHUB_ENV"
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          bash ./.ci/setup-android.sh
 
-      - name: Install Android SDK packages and vcpkg dependencies
-        run: bash ./.ci/setup-android.sh
+      - uses: hendrikmuhs/ccache-action@v1.2.24
 
       - name: Build Android APK
         run: bash ./.ci/build-android.sh artifacts/android
